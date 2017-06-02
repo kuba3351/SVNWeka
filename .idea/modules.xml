@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SVNweka.iml" filepath="$PROJECT_DIR$/.idea/modules/SVNweka.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SVNweka_main.iml" filepath="$PROJECT_DIR$/.idea/modules/SVNweka_main.iml" group="SVNweka" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/modules/SVNweka_test.iml" filepath="$PROJECT_DIR$/.idea/modules/SVNweka_test.iml" group="SVNweka" />
+    </modules>
+  </component>
+</project>

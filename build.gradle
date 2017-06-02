@@ -1,0 +1,47 @@
+apply plugin: 'java'
+
+sourceCompatibility = '1.8'
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+buildscript {
+    repositories {
+        jcenter()
+    }
+
+    dependencies {
+        classpath group: 'com.github.jengelman.gradle.plugins', name: 'shadow', version: '1.2.4'
+    }
+}
+
+if (!hasProperty('mainClass')) {
+    ext.mainClass = 'com.mycompany.svmtrainandtest.MainApp'
+}
+
+repositories {
+    mavenCentral()
+    // You may define additional repositories, or even remove "mavenCentral()".
+    // Read more about repositories here:
+    //   http://www.gradle.org/docs/current/userguide/dependency_management.html#sec:repositories
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.10'
+    compile group: 'nz.ac.waikato.cms.weka', name: 'weka-stable', version: '3.8.0'
+}
+
+apply plugin: 'com.github.johnrengelman.shadow'
+
+shadowJar {
+    baseName = 'SVNWeka'
+    version = '1.0'
+    manifest {
+        attributes 'Main-Class': 'com.mycompany.svmtrainandtest.MainApp'
+    }
+    configurations = [project.configurations.compile]
+}
+
+build.finalizedBy(shadowJar)
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '3.5'
+}
