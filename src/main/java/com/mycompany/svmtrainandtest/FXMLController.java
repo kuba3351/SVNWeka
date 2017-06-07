@@ -18,6 +18,10 @@ import javafx.stage.FileChooser.ExtensionFilter;
 import javafx.stage.Stage;
 import weka.classifiers.Evaluation;
 import weka.classifiers.functions.SMO;
+import weka.classifiers.functions.supportVector.*;
+import weka.core.SelectedTag;
+import weka.core.Tag;
+import weka.core.Utils;
 import weka.core.converters.AbstractFileLoader;
 import weka.core.converters.ArffLoader;
 import weka.core.Instances;
@@ -68,6 +72,8 @@ public class FXMLController implements Initializable {
 
     private Evaluation result;
 
+    private ClassifierSettings classifierSettings;
+
     public FXMLController(Stage stage, Tab tab) {
         this.stage = stage;
         this.tab = tab;
@@ -115,10 +121,75 @@ public class FXMLController implements Initializable {
         });
     }
 
-    public void onRunClassiferButtonClick() {
+    public void onClassifierOptionsButtonClick() throws IOException {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/classifierConfig.fxml"));
+        Stage stage = new Stage();
+        if(classifierSettings == null) {
+            classifierSettings = new ClassifierSettings();
+        }
+        ClassifierSettingsController controller = new ClassifierSettingsController(classifierSettings);
+        loader.setController(controller);
+        Parent root = loader.load();
+
+        Scene scene = new Scene(root);
+
+        stage.setTitle("Opcje klasyfikatora");
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    public void onRunClassiferButtonClick() throws Exception {
+        if(classifierSettings == null) {
+            classifierSettings = new ClassifierSettings();
+        }
         trainingInstances.setClassIndex(trainingInstances.numAttributes() - 1);
         testInstances.setClassIndex(testInstances.numAttributes() - 1);
         SMO smo = new SMO();
+        smo.setEpsilon(Double.parseDouble(classifierSettings.getEpsilon()));
+        switch (classifierSettings.getKernelType()) {
+            case NORMALIZED_POLY:
+                smo.setKernel(new NormalizedPolyKernel());
+                break;
+            case STRING:
+                smo.setKernel(new StringKernel());
+                break;
+            case POLY:
+                smo.setKernel(new PolyKernel());
+                break;
+            case RBF:
+                smo.setKernel(new RBFKernel());
+                break;
+            case PUK:
+                smo.setKernel(new Puk());
+                break;
+            default: throw new Exception("Illegal kernel value");
+        }
+        SelectedTag tag = smo.getFilterType();
+        Tag[] tags = tag.getTags();
+        Tag normalize = null;
+        Tag standarize = null;
+        Tag disabled = null;
+        for(Tag tag1 : tags) {
+            if(tag1.getReadable().equals("Normalize training data"))
+                normalize = tag1;
+            else if(tag1.getReadable().equals("Standardize training data"))
+                standarize = tag1;
+            else if(tag1.getReadable().equals("No normalization/standardization"))
+                disabled = tag1;
+        }
+        switch (classifierSettings.getFilteringMode()) {
+            case STANDARIZE:
+                smo.setFilterType(new SelectedTag(standarize.getID(), tags));
+                break;
+            case NORMALIZE:
+                smo.setFilterType(new SelectedTag(normalize.getID(), tags));
+                break;
+            case DISABLED:
+                smo.setFilterType(new SelectedTag(disabled.getID(), tags));
+                break;
+            default: throw new Exception("Illegal filter type!");
+        }
+        smo.setNumDecimalPlaces(classifierSettings.getNumDecimalPlaces());
         Evaluation evaluation = null;
         try {
             smo.buildClassifier(trainingInstances);

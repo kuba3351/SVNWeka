@@ -51,7 +51,7 @@
                <content>
                   <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
                      <children>
-                        <Button layoutX="114.0" layoutY="17.0" mnemonicParsing="false" text="Ustaw opcje klasyfikatora" />
+                        <Button layoutX="114.0" layoutY="17.0" mnemonicParsing="false" onAction="#onClassifierOptionsButtonClick" text="Ustaw opcje klasyfikatora" />
                         <Button layoutX="122.0" layoutY="59.0" mnemonicParsing="false" onAction="#onRunClassiferButtonClick" text="Uruchom klasyfikator" />
                      </children>
                   </AnchorPane>
