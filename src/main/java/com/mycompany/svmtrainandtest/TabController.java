@@ -3,9 +3,11 @@ package com.mycompany.svmtrainandtest;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.util.Enumeration;
 import java.util.Random;
 import java.util.ResourceBundle;
 
+import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -19,15 +21,12 @@ import javafx.stage.Stage;
 import weka.classifiers.Evaluation;
 import weka.classifiers.functions.SMO;
 import weka.classifiers.functions.supportVector.*;
-import weka.core.SelectedTag;
-import weka.core.Tag;
-import weka.core.Utils;
+import weka.core.*;
 import weka.core.converters.AbstractFileLoader;
 import weka.core.converters.ArffLoader;
-import weka.core.Instances;
 import weka.core.converters.CSVLoader;
 
-public class FXMLController implements Initializable {
+public class TabController implements Initializable {
 
     @FXML
     private Button browseButton;
@@ -74,7 +73,13 @@ public class FXMLController implements Initializable {
 
     private ClassifierSettings classifierSettings;
 
-    public FXMLController(Stage stage, Tab tab) {
+    @FXML
+    private ChoiceBox<AttributeChoiceBoxWrapper> trainingDecision;
+
+    @FXML
+    private Button trainingNext;
+
+    public TabController(Stage stage, Tab tab) {
         this.stage = stage;
         this.tab = tab;
     }
@@ -119,6 +124,8 @@ public class FXMLController implements Initializable {
                 }
             }
         });
+        trainingDecision.setDisable(true);
+        trainingNext.setDisable(true);
     }
 
     public void onClassifierOptionsButtonClick() throws IOException {
@@ -145,7 +152,16 @@ public class FXMLController implements Initializable {
         trainingInstances.setClassIndex(trainingInstances.numAttributes() - 1);
         testInstances.setClassIndex(testInstances.numAttributes() - 1);
         SMO smo = new SMO();
-        smo.setEpsilon(Double.parseDouble(classifierSettings.getEpsilon()));
+        try {
+            smo.setEpsilon(Double.parseDouble(classifierSettings.getEpsilon()));
+        } catch (Exception e) {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Błąd!");
+            alert.setHeaderText("Nieprawidłowe dane.");
+            alert.setContentText("Do pola na epsilon wpisano głupoty.");
+            alert.showAndWait();
+            return;
+        }
         switch (classifierSettings.getKernelType()) {
             case NORMALIZED_POLY:
                 smo.setKernel(new NormalizedPolyKernel());
@@ -273,19 +289,20 @@ public class FXMLController implements Initializable {
 
     public void onTestBrowseButtonClick() {
         testDataFile = openFile();
-        testApplyButton.setDisable(false);
-        bottomLabel.setText("Wybrano plik "+ testDataFile.getName()+" do wczytania.");
-    }
-
-    public void onTestApplyButtonClick() {
-        if(testDiskRadio.isSelected()) {
+        if(testDataFile != null) {
             String extension;
             int dot = testDataFile.getName().lastIndexOf(".");
             extension = testDataFile.getName().substring(dot + 1, testDataFile.getName().length());
             LoadInstances loadInstances = new LoadInstances(extension).invoke(testDataFile);
             if (loadInstances.is()) return;
             testInstances = loadInstances.getData();
+            testApplyButton.setDisable(false);
+            bottomLabel.setText("Wybrano plik " + testDataFile.getName() + " do wczytania.");
+        }
+    }
 
+    public void onTestApplyButtonClick() {
+        if(testDiskRadio.isSelected()) {
             TitledPane viewAndEdit = accordion.getPanes().stream().filter(pane -> pane.getText().equals("Wyświetlanie i edycja danych")).findFirst().get();
             accordion.getPanes().stream().filter(pane -> pane.getText().equals("Klasyfikator SVN")).findFirst().get().setDisable(false);
             viewAndEdit.setDisable(false);
@@ -323,6 +340,7 @@ public class FXMLController implements Initializable {
             bottomLabel.setText("Wybrano " + testInstances.numInstances() + " instancji testowych.");
             randomPerformed = true;
         }
+        testInstances.setClass(trainingDecision.getSelectionModel().getSelectedItem().getAttribute());
     }
 
     private File openFile() {
@@ -336,25 +354,40 @@ public class FXMLController implements Initializable {
 
     public void onBrowseButtonClick() {
         trainingDataFile = openFile();
-        trainingStatusLabel.setText("Wybrano plik "+ trainingDataFile.getName()+" do wczytania.");
-        onApplyButtonClick();
+        if(trainingDataFile != null) {
+            trainingStatusLabel.setText("Wybrano plik " + trainingDataFile.getName() + " do wczytania.");
+            onApplyButtonClick();
+        }
     }
-    public void onApplyButtonClick() {
+
+    private void onApplyButtonClick() {
         String extension;
         int dot = trainingDataFile.getName().lastIndexOf(".");
         extension = trainingDataFile.getName().substring(dot + 1, trainingDataFile.getName().length());
         LoadInstances loadInstances = new LoadInstances(extension).invoke(trainingDataFile);
         if (loadInstances.is()) return;
         trainingInstances = loadInstances.getData();
+        tab.setText(trainingDataFile.getName());
+        trainingStatusLabel.setText("Wczytano "+ trainingInstances.numInstances()+" instancji.");
+        Enumeration<Attribute> attributes = trainingInstances.enumerateAttributes();
+        trainingDecision.setDisable(false);
+        while(attributes.hasMoreElements()) {
+            Attribute attribute = attributes.nextElement();
+            trainingDecision.getItems().add(new AttributeChoiceBoxWrapper(attribute, attribute.name()));
+        }
+        trainingDecision.getSelectionModel().selectLast();
+        trainingNext.setDisable(false);
+        trainingDecision.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<AttributeChoiceBoxWrapper>() {
+            @Override
+            public void changed(ObservableValue<? extends AttributeChoiceBoxWrapper> observableValue, AttributeChoiceBoxWrapper attributeChoiceBoxWrapper, AttributeChoiceBoxWrapper t1) {
+                trainingInstances.setClass(t1.getAttribute());
+            }
+        });
+    }
 
+    public void onTrainingNextButtonClick() {
         TitledPane testPane = accordion.getPanes().stream().filter(pane -> pane.getText().equals("Dane testowe")).findFirst().get();
         testPane.setDisable(false);
         accordion.setExpandedPane(testPane);
-        tab.setText(trainingDataFile.getName());
-        trainingStatusLabel.setText("Wczytano "+ trainingInstances.numInstances()+" instancji.");
     }
-
-
-
-
 }

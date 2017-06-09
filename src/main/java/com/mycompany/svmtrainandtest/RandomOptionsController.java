@@ -6,7 +6,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
-import javafx.stage.Window;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -28,11 +27,11 @@ public class RandomOptionsController implements Initializable {
     @FXML
     private Label percentLabel;
 
-    private FXMLController controller;
+    private TabController controller;
     private RandomSettings randomSettings;
     private Boolean randomPerformed;
 
-    public RandomOptionsController(FXMLController controller, Boolean randomPerformed) {
+    public RandomOptionsController(TabController controller, Boolean randomPerformed) {
         this.controller = controller;
         this.randomPerformed = randomPerformed;
     }

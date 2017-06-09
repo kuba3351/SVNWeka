@@ -64,9 +64,6 @@ public class MainApp extends Application {
                         case "testData.file":
                             params.setTestDataFileName(value);
                             break;
-                        case "testnData.class":
-                            params.setTestDataClass(value);
-                            break;
                         case "testData.percent":
                             params.setTestDataPercent(Integer.parseInt(value));
                             break;

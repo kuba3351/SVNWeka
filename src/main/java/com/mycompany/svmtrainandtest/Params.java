@@ -7,7 +7,6 @@ public class Params {
     private String trainingDataFileName;
     private String trainingDataClass;
     private String testDataFileName;
-    private String testDataClass;
     private Integer testDataPercent;
     private Integer testDataSeed;
     private String resultFile;
@@ -34,14 +33,6 @@ public class Params {
 
     public void setTestDataFileName(String testDataFileName) {
         this.testDataFileName = testDataFileName;
-    }
-
-    public String getTestDataClass() {
-        return testDataClass;
-    }
-
-    public void setTestDataClass(String testDataClass) {
-        this.testDataClass = testDataClass;
     }
 
     public Integer getTestDataPercent() {

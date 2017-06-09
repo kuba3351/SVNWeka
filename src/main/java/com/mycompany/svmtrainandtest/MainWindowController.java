@@ -8,8 +8,7 @@ package com.mycompany.svmtrainandtest;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.fxml.FXML;
@@ -49,8 +48,8 @@ public class MainWindowController implements Initializable {
                     Tab newTab = new Tab();
                     newTab.setText("Bez nazwy");
                     try {
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/Scene.fxml"));
-                        FXMLController controller = new FXMLController(stage, newTab);
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/tab.fxml"));
+                        TabController controller = new TabController(stage, newTab);
                         loader.setController(controller);
                         newContent = loader.load();
                     } catch (IOException ex) {
