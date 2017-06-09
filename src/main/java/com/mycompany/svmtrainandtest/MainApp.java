@@ -9,8 +9,8 @@ import javafx.stage.Stage;
 import org.apache.log4j.Logger;
 import weka.classifiers.Evaluation;
 import weka.classifiers.functions.SMO;
-import weka.core.Instances;
-import weka.core.Option;
+import weka.classifiers.functions.supportVector.*;
+import weka.core.*;
 import weka.experiment.InstanceQuery;
 
 import java.io.BufferedWriter;
@@ -68,10 +68,58 @@ public class MainApp extends Application {
                             params.setTestDataPercent(Integer.parseInt(value));
                             break;
                         case "testData.seed":
-                            params.setTestDataSeed(Integer.parseInt(value));
+                            try {
+                                params.setTestDataSeed(Integer.parseInt(value));
+                            } catch (Exception e) {
+                                System.out.println("Nieprawidłowe ziarno losowe.");
+                                System.exit(70);
+                            }
                             break;
                         case "output.file":
                             params.setResultFile(value);
+                            break;
+                        case "debug":
+                            if(value.equals("true"))
+                                params.setDebug(true);
+                            break;
+                        case "epsilon":
+                            params.setEpsilon(value);
+                            break;
+                        case "filtering":
+                            if(value.equals("NORMALIZE"))
+                                params.setFilteringMode(FilteringMode.NORMALIZE);
+                            else if(value.equals("STANDARIZE"))
+                                params.setFilteringMode(FilteringMode.STANDARIZE);
+                            else if(value.equals("DISABLED"))
+                                params.setFilteringMode(FilteringMode.DISABLED);
+                            else {
+                                System.out.println("Filtering mode: "+value+" not supported");
+                                System.exit(20);
+                            }
+                            break;
+                        case "kernel":
+                            if(value.equals("NORMALIZED_POLY"))
+                                params.setKernelType(KernelType.NORMALIZED_POLY);
+                            else if(value.equals("POLY"))
+                                params.setKernelType(KernelType.POLY);
+                            else if (value.equals("PUK"))
+                                params.setKernelType(KernelType.PUK);
+                            else if(value.equals("RBF"))
+                                params.setKernelType(KernelType.RBF);
+                            else if (value.equals("STRING"))
+                                params.setKernelType(KernelType.STRING);
+                            else {
+                                System.out.println("Nieobsługiwany typ jądra: "+value);
+                                System.exit(50);
+                            }
+                            break;
+                        case "numDecimal":
+                            try {
+                                params.setNumDecimal(Integer.parseInt(value));
+                            } catch (Exception e) {
+                                System.out.println("Nieprawidłowa wartość numDecimal");
+                                System.exit(80);
+                            }
                             break;
                         default:
                             logger.error("Nieobsługiwany paranetr: "+name);
@@ -86,24 +134,35 @@ public class MainApp extends Application {
                 System.exit(1);
             }
             logger.info("Parametry prawidłowe. Rozpoczynam wczytywanie danych treningowych");
-            File trainingDataFile = new File(params.getTrainingDataFileName());
-            String extension;
-            int dot = trainingDataFile.getName().lastIndexOf(".");
-            extension = trainingDataFile.getName().substring(dot + 1, trainingDataFile.getName().length());
-            LoadInstances loadInstances = new LoadInstances(extension).invoke(trainingDataFile);
-            if (loadInstances.is()) return;
-            Instances trainingInstances = loadInstances.getData();
-            System.out.println("Wczytano "+trainingInstances.numInstances()+" instancji.");
-            Instances testInstances;
-            if(params.getTestDataFileName() != null) {
-                logger.info("Rozpoczynam wczytywanie danych testowych...");
-                File testDataFile = new File(params.getTestDataFileName());
-                dot = testDataFile.getName().lastIndexOf(".");
-                extension = testDataFile.getName().substring(dot + 1, testDataFile.getName().length());
-                loadInstances = new LoadInstances(extension).invoke(testDataFile);
+            Instances trainingInstances = null;
+            try {
+                File trainingDataFile = new File(params.getTrainingDataFileName());
+                String extension;
+                int dot = trainingDataFile.getName().lastIndexOf(".");
+                extension = trainingDataFile.getName().substring(dot + 1, trainingDataFile.getName().length());
+                LoadInstances loadInstances = new LoadInstances(extension).invoke(trainingDataFile);
                 if (loadInstances.is()) return;
-                testInstances = loadInstances.getData();
-                logger.info("Wczytano "+testInstances.numInstances()+"instancji");
+                trainingInstances = loadInstances.getData();
+            } catch (Exception e) {
+                logger.error("Błąd wczytywania danych treningowych. Sprawdź czy plik istnieje.");
+                System.exit(101);
+            }
+            System.out.println("Wczytano "+trainingInstances.numInstances()+" instancji.");
+            Instances testInstances = null;
+            if(params.getTestDataFileName() != null) {
+                try {
+                    logger.info("Rozpoczynam wczytywanie danych testowych...");
+                    File testDataFile = new File(params.getTestDataFileName());
+                    int dot = testDataFile.getName().lastIndexOf(".");
+                    String extension = testDataFile.getName().substring(dot + 1, testDataFile.getName().length());
+                    LoadInstances loadInstances = new LoadInstances(extension).invoke(testDataFile);
+                    if (loadInstances.is()) return;
+                    testInstances = loadInstances.getData();
+                    logger.info("Wczytano " + testInstances.numInstances() + "instancji");
+                } catch (Exception e) {
+                    logger.error("Błąd wczytywania danych testowych. Sprawdź czy plik istnieje.");
+                    System.exit(99);
+                }
             }
             else {
                 if(params.getTestDataSeed() == null) {
@@ -122,9 +181,97 @@ public class MainApp extends Application {
                 logger.info("Tablice podzielone. Wybrano "+testInstances.numInstances()+" instancji testowych.");
             }
             logger.info("Rozpoczynam uczenie klasyfikatora...");
-            trainingInstances.setClassIndex(trainingInstances.numAttributes() - 1);
-            testInstances.setClassIndex(testInstances.numAttributes() - 1);
+            if(params.getTrainingDataClass() == null) {
+                trainingInstances.setClassIndex(trainingInstances.numAttributes() - 1);
+                testInstances.setClassIndex(trainingInstances.numAttributes() - 1);
+            }
+            else if(isNumeric(params.getTrainingDataClass())) {
+                trainingInstances.setClassIndex(Integer.parseInt(params.getTrainingDataFileName()));
+                testInstances.setClassIndex(Integer.parseInt(params.getTrainingDataFileName()));
+            }
+            else {
+                Boolean found = false;
+                Enumeration<Attribute> attributes = trainingInstances.enumerateAttributes();
+                while (attributes.hasMoreElements()) {
+                    Attribute attribute = attributes.nextElement();
+                    if(attribute.name().equals(params.getTrainingDataClass())) {
+                        found = true;
+                        trainingInstances.setClass(attribute);
+                        testInstances.setClass(attribute);
+                    }
+                }
+                if(!found) {
+                    System.out.println("Nie znaleziono atrybutu decyzyjnego: "+params.getTrainingDataClass());
+                    System.exit(10);
+                }
+            }
             SMO smo = new SMO();
+            if(params.getDebug() == null)
+                smo.setDebug(false);
+            else
+                smo.setDebug(params.getDebug());
+            if(params.getEpsilon() == null)
+                smo.setEpsilon(Double.parseDouble("1.0E-12"));
+            else {
+                try {
+                    smo.setEpsilon(Double.parseDouble(params.getEpsilon()));
+                } catch (Exception e) {
+                    System.out.println("Zły epsilon");
+                }
+            }
+            SelectedTag tag = smo.getFilterType();
+            Tag[] tags = tag.getTags();
+            Tag normalize = null;
+            Tag standarize = null;
+            Tag disabled = null;
+            for(Tag tag1 : tags) {
+                if(tag1.getReadable().equals("Normalize training data"))
+                    normalize = tag1;
+                else if(tag1.getReadable().equals("Standardize training data"))
+                    standarize = tag1;
+                else if(tag1.getReadable().equals("No normalization/standardization"))
+                    disabled = tag1;
+            }
+            if(params.getFilteringMode() == null)
+                smo.setFilterType(new SelectedTag(normalize.getID(), tags));
+            else {
+                switch (params.getFilteringMode()) {
+                    case DISABLED:
+                        smo.setFilterType(new SelectedTag(disabled.getID(), tags));
+                        break;
+                    case NORMALIZE:
+                        smo.setFilterType(new SelectedTag(normalize.getID(), tags));
+                        break;
+                    case STANDARIZE:
+                        smo.setFilterType(new SelectedTag(standarize.getID(), tags));
+                        break;
+                }
+            }
+            if (params.getKernelType() == null)
+                smo.setKernel(new PolyKernel());
+            else {
+                switch (params.getKernelType()) {
+                    case PUK:
+                        smo.setKernel(new Puk());
+                        break;
+                    case RBF:
+                        smo.setKernel(new RBFKernel());
+                        break;
+                    case POLY:
+                        smo.setKernel(new PolyKernel());
+                        break;
+                    case STRING:
+                        smo.setKernel(new StringKernel());
+                        break;
+                    case NORMALIZED_POLY:
+                        smo.setKernel(new NormalizedPolyKernel());
+                        break;
+                }
+            }
+            if(params.getNumDecimal() == null)
+                smo.setNumDecimalPlaces(2);
+            else
+                smo.setNumDecimalPlaces(params.getNumDecimal());
             Evaluation evaluation = null;
             try {
                 smo.buildClassifier(trainingInstances);
@@ -171,4 +318,12 @@ public class MainApp extends Application {
         System.exit(0);
     }
 
+    public static boolean isNumeric(String str)
+    {
+        for (char c : str.toCharArray())
+        {
+            if (!Character.isDigit(c)) return false;
+        }
+        return true;
+    }
 }
