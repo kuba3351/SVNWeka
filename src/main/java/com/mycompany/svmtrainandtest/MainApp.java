@@ -58,14 +58,23 @@ public class MainApp extends Application {
                         case "trainData.file":
                             params.setTrainingDataFileName(value);
                             break;
-                        case "trainData.class":
+                        case "decisionClass":
                             params.setTrainingDataClass(value);
                             break;
                         case "testData.file":
                             params.setTestDataFileName(value);
                             break;
                         case "testData.percent":
-                            params.setTestDataPercent(Integer.parseInt(value));
+                            try {
+                                int testDataPercent = Integer.parseInt(value);
+                                if(testDataPercent <= 0 || testDataPercent >= 100) {
+                                    throw new Exception();
+                                }
+                                params.setTestDataPercent(testDataPercent);
+                            } catch (Exception e) {
+                                System.out.println("Zła wartość testData.percent");
+                                System.exit(200);
+                            }
                             break;
                         case "testData.seed":
                             try {
@@ -184,10 +193,6 @@ public class MainApp extends Application {
             if(params.getTrainingDataClass() == null) {
                 trainingInstances.setClassIndex(trainingInstances.numAttributes() - 1);
                 testInstances.setClassIndex(trainingInstances.numAttributes() - 1);
-            }
-            else if(isNumeric(params.getTrainingDataClass())) {
-                trainingInstances.setClassIndex(Integer.parseInt(params.getTrainingDataFileName()));
-                testInstances.setClassIndex(Integer.parseInt(params.getTrainingDataFileName()));
             }
             else {
                 Boolean found = false;
@@ -316,14 +321,5 @@ public class MainApp extends Application {
             }
         }
         System.exit(0);
-    }
-
-    public static boolean isNumeric(String str)
-    {
-        for (char c : str.toCharArray())
-        {
-            if (!Character.isDigit(c)) return false;
-        }
-        return true;
     }
 }
