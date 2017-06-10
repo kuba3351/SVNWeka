@@ -131,6 +131,7 @@ public class TabController implements Initializable {
     public void onClassifierOptionsButtonClick() throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/classifierConfig.fxml"));
         Stage stage = new Stage();
+        stage.setResizable(false);
         if(classifierSettings == null) {
             classifierSettings = new ClassifierSettings();
         }
@@ -228,6 +229,7 @@ public class TabController implements Initializable {
     public void onResultButtonClick() throws IOException {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/result.fxml"));
         Stage stage = new Stage();
+        stage.setResizable(false);
         ResultController controller = new ResultController(result, stage);
         loader.setController(controller);
         Parent root = loader.load();
@@ -248,6 +250,7 @@ public class TabController implements Initializable {
 
         Scene scene = new Scene(root);
 
+        stage.setResizable(false);
         stage.setTitle("Opcje losowania");
         stage.setScene(scene);
         stage.show();
@@ -260,7 +263,7 @@ public class TabController implements Initializable {
         Parent root = loader.load();
 
         Stage stage = new Stage();
-
+        stage.setResizable(false);
         Scene scene = new Scene(root);
 
         stage.setTitle("Dane treningowe");
@@ -281,7 +284,7 @@ public class TabController implements Initializable {
 
         Stage stage = new Stage();
         Scene scene = new Scene(root);
-
+        stage.setResizable(false);
         stage.setTitle("Dane testowe");
         stage.setScene(scene);
         stage.show();
