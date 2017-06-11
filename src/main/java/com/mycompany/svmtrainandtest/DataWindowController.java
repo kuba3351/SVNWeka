@@ -6,16 +6,14 @@ import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.SelectionMode;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TablePosition;
-import javafx.scene.control.TableView;
+import javafx.scene.control.*;
 import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.util.Callback;
 import weka.core.Attribute;
 import weka.core.DenseInstance;
 import weka.core.Instance;
 import weka.core.Instances;
+import weka.filters.unsupervised.attribute.Remove;
 
 import java.net.URL;
 import java.util.Enumeration;
@@ -64,10 +62,19 @@ public class DataWindowController implements Initializable {
                     TablePosition position = cellEditEvent.getTablePosition();
                     Instance instance = instances.get(position.getRow());
                     Attribute attribute1 = instance.attribute(position.getColumn());
-                    if(attribute1.isNominal() || attribute1.isString())
-                        instance.setValue(position.getColumn(), cellEditEvent.getNewValue().toString());
-                    else if(attribute1.isNumeric()) {
-                        instance.setValue(position.getColumn(), Double.parseDouble(cellEditEvent.getNewValue().toString()));}
+                    try {
+                        if (attribute1.isNominal() || attribute1.isString())
+                            instance.setValue(position.getColumn(), cellEditEvent.getNewValue().toString());
+                        else if (attribute1.isNumeric()) {
+                            instance.setValue(position.getColumn(), Double.parseDouble(cellEditEvent.getNewValue().toString()));
+                        }
+                    } catch (Exception e) {
+                        Alert alert = new Alert(Alert.AlertType.ERROR);
+                        alert.setTitle("Błąd");
+                        alert.setHeaderText("Błąd edycji danych");
+                        alert.setContentText("Ta wartość jest nieprawidłowa dla tego atrybutu");
+                        alert.showAndWait();
+                    }
                 }
             });
             columns.add(column);

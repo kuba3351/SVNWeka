@@ -78,7 +78,16 @@ public class RandomOptionsController implements Initializable {
         }
         randomSettings.setTestDataPercent(Long.valueOf(Math.round(percentSlider.getValue())).intValue());
         if(seedCheckBox.isSelected()) {
-            randomSettings.setSeed(Integer.parseInt(seedField.getText()));
+            try {
+                randomSettings.setSeed(Integer.parseInt(seedField.getText()));
+            } catch (Exception e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Błąd");
+                alert.setHeaderText("Błąd ziarna losowego");
+                alert.setContentText("Źle wpisane ziarno losowe");
+                alert.showAndWait();
+                return;
+            }
         }
         controller.setRandomSettings(randomSettings);
         Stage stage = (Stage)percentLabel.getScene().getWindow();

@@ -146,7 +146,7 @@ public class TabController implements Initializable {
         stage.show();
     }
 
-    public void onRunClassiferButtonClick() throws Exception {
+    public void onRunClassiferButtonClick() {
         if(classifierSettings == null) {
             classifierSettings = new ClassifierSettings();
         }
@@ -179,7 +179,6 @@ public class TabController implements Initializable {
             case PUK:
                 smo.setKernel(new Puk());
                 break;
-            default: throw new Exception("Illegal kernel value");
         }
         SelectedTag tag = smo.getFilterType();
         Tag[] tags = tag.getTags();
@@ -204,7 +203,6 @@ public class TabController implements Initializable {
             case DISABLED:
                 smo.setFilterType(new SelectedTag(disabled.getID(), tags));
                 break;
-            default: throw new Exception("Illegal filter type!");
         }
         smo.setNumDecimalPlaces(classifierSettings.getNumDecimalPlaces());
         Evaluation evaluation = null;
@@ -293,12 +291,53 @@ public class TabController implements Initializable {
     public void onTestBrowseButtonClick() {
         testDataFile = openFile();
         if(testDataFile != null) {
+            if(!trainingDataFile.exists()) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Błąd");
+                alert.setHeaderText("Błąd danych testowych");
+                alert.setContentText("Plik z danymi testowymi nie istnieje");
+                alert.showAndWait();
+                return;
+            }
             String extension;
             int dot = testDataFile.getName().lastIndexOf(".");
             extension = testDataFile.getName().substring(dot + 1, testDataFile.getName().length());
-            LoadInstances loadInstances = new LoadInstances(extension).invoke(testDataFile);
-            if (loadInstances.is()) return;
-            testInstances = loadInstances.getData();
+            try {
+                LoadInstances loadInstances = new LoadInstances(extension).invoke(testDataFile);
+                if (loadInstances.is()) return;
+                testInstances = loadInstances.getData();
+            } catch (Exception e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Błąd");
+                alert.setHeaderText("Błąd danych testowych");
+                alert.setContentText("Zły format pliku z danymi testowymi");
+                alert.showAndWait();
+                return;
+            }
+            Enumeration<Attribute> trainAttributes = trainingInstances.enumerateAttributes();
+            Enumeration<Attribute> testAttributes = testInstances.enumerateAttributes();
+            if(trainingInstances.numAttributes() != testInstances.numAttributes()) {
+                testApplyButton.setDisable(true);
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Błąd");
+                alert.setHeaderText("Błąd danych testowych");
+                alert.setContentText("Nie można użyć danych testowych, ponieważ atrybuty nie zgadzają się z danymi treningowymi.");
+                alert.showAndWait();
+                return;
+            }
+            while (trainAttributes.hasMoreElements() && testAttributes.hasMoreElements()) {
+                Attribute train = trainAttributes.nextElement();
+                Attribute test = testAttributes.nextElement();
+                if(!train.equals(test)) {
+                    testApplyButton.setDisable(true);
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Błąd");
+                    alert.setHeaderText("Błąd danych testowych");
+                    alert.setContentText("Nie można użyć danych testowych, ponieważ atrybuty nie zgadzają się z danymi treningowymi.");
+                    alert.showAndWait();
+                    return;
+                }
+            }
             testApplyButton.setDisable(false);
             bottomLabel.setText("Wybrano plik " + testDataFile.getName() + " do wczytania.");
         }
@@ -358,8 +397,23 @@ public class TabController implements Initializable {
     public void onBrowseButtonClick() {
         trainingDataFile = openFile();
         if(trainingDataFile != null) {
+            if(!trainingDataFile.exists()) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Bład");
+                alert.setHeaderText("Błąd wczytywania danych wejściowych");
+                alert.setContentText("Plik nie istnieje!");
+                alert.showAndWait();
+            }
             trainingStatusLabel.setText("Wybrano plik " + trainingDataFile.getName() + " do wczytania.");
-            onApplyButtonClick();
+            try {
+                onApplyButtonClick();
+            } catch (Exception e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Bład");
+                alert.setHeaderText("Błąd wczytywania danych wejściowych");
+                alert.setContentText("Zły format danych treningowych");
+                alert.showAndWait();
+            }
         }
     }
 
