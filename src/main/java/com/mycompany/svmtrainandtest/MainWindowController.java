@@ -1,68 +1,129 @@
 package com.mycompany.svmtrainandtest;
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-import java.io.IOException;
-import java.net.URL;
-import java.util.ResourceBundle;
-
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Parent;
-import javafx.scene.control.Tab;
-import javafx.scene.control.TabPane;
-import javafx.stage.Stage;
+import javafx.scene.SubScene;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.ProgressBar;
 
-/**
- * FXML Controller class
- *
- * @author jakub
- */
+import java.io.IOException;
+import java.net.URL;
+import java.util.*;
+
 public class MainWindowController implements Initializable {
 
+    private static MainWindowController instance;
+
     @FXML
-    private TabPane tabPane;
+    private SubScene content;
 
-    private Stage stage;
+    @FXML
+    private Button back;
 
-    public MainWindowController(Stage stage) {
-        this.stage = stage;
+    @FXML
+    private Button next;
+
+    @FXML
+    private ProgressBar progressBar;
+
+    @FXML
+    private Label loadingLabel;
+
+    @FXML
+    private Label bottomLabel;
+
+    public ProgressBar getProgressBar() {
+        return progressBar;
     }
 
-    /**
-     * Initializes the controller class.
-     */
-    @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        ChangeListener<Tab> listener = new ChangeListener<Tab>() {
-            @Override
-            public void changed(ObservableValue<? extends Tab> ov, Tab t, Tab t1) {
-                if (t1.getText().equals("+")) {
-                    Parent newContent = null;
-                    Tab newTab = new Tab();
-                    newTab.setText("Bez nazwy");
-                    try {
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/tab.fxml"));
-                        TabController controller = new TabController(stage, newTab);
-                        loader.setController(controller);
-                        newContent = loader.load();
-                    } catch (IOException ex) {
-                        ex.printStackTrace();
-                    }
-                    newTab.setContent(newContent);
-                    int numberOfTabs = tabPane.getTabs().size();
-                    tabPane.getTabs().add(numberOfTabs - 1, newTab);
-                    tabPane.getSelectionModel().select(newTab);
-                }
+    public Label getLoadingLabel() {
+        return loadingLabel;
+    }
+
+    private int currentStepNumber;
+    private List<Step> steps;
+
+    private MainWindowController() {
+
+    }
+
+    public static MainWindowController getInstance() {
+        if (instance == null)
+            instance = new MainWindowController();
+        return instance;
+    }
+
+    public void onNextButtonClick() throws Exception {
+        content.setVisible(false);
+        progressBar.setVisible(true);
+        loadingLabel.setVisible(true);
+        back.setDisable(true);
+        next.setDisable(true);
+        currentStepNumber++;
+        bottomLabel.setText(String.format("Krok %d z 6", currentStepNumber+1));
+        Step step = steps.get(currentStepNumber);
+        content.setRoot(step.getParent());
+        Thread thread = new Thread(() -> {
+            try {
+                step.getController().runWhileEnterStep();
+                Platform.runLater(() -> {
+                    content.setVisible(true);
+                    progressBar.setVisible(false);
+                    loadingLabel.setVisible(false);
+                    next.setDisable(!step.getController().canGoNext());
+                    back.setDisable(!step.getController().canGoBack());
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                Platform.runLater(() -> {
+                    progressBar.setVisible(false);
+                    loadingLabel.setText(e.getMessage()+"\nProszę wrócić wstecz!");
+                    next.setDisable(true);
+                    back.setDisable(false);
+                });
             }
-        };
-        tabPane.getSelectionModel().selectedItemProperty().addListener(listener);
-        listener.changed(null, null, tabPane.getTabs().get(0));
+        });
+        thread.start();
+    }
+
+    public void onPreviousButtonClick() {
+        currentStepNumber--;
+        bottomLabel.setText(String.format("Krok %d z 6", currentStepNumber+1));
+        Step step = steps.get(currentStepNumber);
+        content.setRoot(step.getParent());
+        content.setVisible(true);
+        loadingLabel.setVisible(false);
+        next.setDisable(!step.getController().canGoNext());
+        back.setDisable(!step.getController().canGoBack());
+    }
+
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        progressBar.setVisible(false);
+        loadingLabel.setVisible(false);
+        steps = new ArrayList<>();
+        steps.add(new Step("/fxml/splunkForm.fxml", DatabaseConnectController.getInstance()));
+        steps.add(new Step("/fxml/trainDataSelection.fxml", PrepareDataStepController.getInstance()));
+        steps.add(new Step("/fxml/viewDataWindow.fxml", TrainDataWindowController.getInstence()));
+        steps.add(new Step("/fxml/viewDataWindow.fxml", TestDataWindowController.getInstance()));
+        steps.add(new Step("/fxml/classifierConfig.fxml", ClassifierSettingsController.getInstance()));
+        steps.add(new Step("/fxml/result.fxml", ResultController.getInstance()));
+        steps.forEach(step -> {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(step.getXmlFile()));
+            loader.setController(step.getController());
+            try {
+                step.setParent(loader.load());
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+        currentStepNumber = 0;
+        Step step = steps.get(currentStepNumber);
+        content.setRoot(step.getParent());
+        next.setDisable(!step.getController().canGoNext());
+        back.setDisable(!step.getController().canGoBack());
     }
 }

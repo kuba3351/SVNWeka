@@ -1,0 +1,11 @@
+<component name="libraryTable">
+  <library name="Gradle: com.splunk:splunk:1.6.3.0">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.splunk/splunk/1.6.3.0/ed48da611347ef8a23e5861850cbe456deac2918/splunk-1.6.3.0.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$USER_HOME$/.gradle/caches/modules-2/files-2.1/com.splunk/splunk/1.6.3.0/6c36173a1b192e4243258afc96c0cfed10448e66/splunk-1.6.3.0-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

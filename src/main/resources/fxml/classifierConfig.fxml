@@ -1,27 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ChoiceBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Spinner?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 
-
-<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1">
+<AnchorPane prefHeight="400.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.162-ea" xmlns:fx="http://javafx.com/fxml/1">
    <children>
       <CheckBox fx:id="debugCheckBox" layoutX="26.0" layoutY="53.0" mnemonicParsing="false" text="Tryb debugowania" />
-      <Label layoutX="26.0" layoutY="21.0" text="Ustawienia klasyfikatora:" />
+      <Label layoutX="26.0" layoutY="21.0" text="Wprowadź ustawienia klasyfikatora:" />
       <Label layoutX="26.0" layoutY="86.0" text="epsilon:" />
       <TextField fx:id="epsilonField" layoutX="86.0" layoutY="81.0" />
       <ChoiceBox fx:id="filterModeChoiceBox" layoutX="139.0" layoutY="120.0" prefWidth="150.0" />
       <Label layoutX="26.0" layoutY="125.0" text="Tryb filtrowania:" />
       <Label layoutX="26.0" layoutY="162.0" text="Funkcja jądra:" />
       <ChoiceBox fx:id="kernelChoiceBox" layoutX="126.0" layoutY="157.0" prefWidth="150.0" />
-      <Label layoutX="26.0" layoutY="200.0" text="Liczba miejsc po przecinku:" />
-      <Spinner fx:id="numDecimalSpinner" layoutX="215.0" layoutY="195.0" />
-      <Button layoutX="41.0" layoutY="244.0" mnemonicParsing="false" onAction="#onOkButtonClick" text="Ok" />
-      <Button layoutX="289.0" layoutY="244.0" mnemonicParsing="false" onAction="#onCancelButtonClick" text="Anuluj" />
+      <Label layoutX="25.0" layoutY="200.0" text="Atrybut decyzyjny:" />
+      <ChoiceBox fx:id="decision" layoutX="156.0" layoutY="195.0" prefWidth="150.0" />
    </children>
 </AnchorPane>

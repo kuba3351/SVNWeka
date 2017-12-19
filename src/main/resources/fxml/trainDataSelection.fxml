@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.RadioButton?>
+<?import javafx.scene.control.Slider?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+
+<AnchorPane prefHeight="445.0" prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.162-ea" xmlns:fx="http://javafx.com/fxml/1">
+   <children>
+      <Label layoutX="26.0" layoutY="23.0" text="Teraz podaj podstawowe parametry danych:" />
+      <Label layoutX="46.0" layoutY="59.0" text="Dane treningowe:" />
+      <ChoiceBox fx:id="trainData" layoutX="172.0" layoutY="54.0" prefHeight="26.0" prefWidth="278.0" />
+      <Label layoutX="26.0" layoutY="94.0" text="Dane testowe:" />
+      <RadioButton fx:id="testRandomRadio" layoutX="29.0" layoutY="123.0" mnemonicParsing="false" text="Losuj z danych treningowych" />
+      <RadioButton fx:id="testDiskRadio" layoutX="361.0" layoutY="123.0" mnemonicParsing="false" text="Z bazy" />
+      <Slider fx:id="percentSlider" layoutX="62.0" layoutY="194.0" />
+      <Label layoutX="25.0" layoutY="165.0" text="Procent danych testowych:" />
+      <Label layoutX="25.0" layoutY="194.0" text="0%" />
+      <Label layoutX="216.0" layoutY="194.0" text="100%" />
+      <CheckBox fx:id="seedCheckBox" layoutX="25.0" layoutY="268.0" mnemonicParsing="false" text="Użyj własnego ziarna losowego" />
+      <Label layoutX="25.0" layoutY="302.0" text="Ziarno losowe:" />
+      <TextField fx:id="seedField" layoutX="131.0" layoutY="297.0" />
+      <Label fx:id="percentLabel" layoutX="113.0" layoutY="218.0" text="Label" />
+      <ChoiceBox fx:id="testData" layoutX="286.0" layoutY="152.0" prefHeight="26.0" prefWidth="227.0" />
+   </children>
+</AnchorPane>

@@ -3,16 +3,20 @@ package com.mycompany.svmtrainandtest;
 /**
  * Created by jakub on 07.06.17.
  */
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 import javafx.stage.Window;
+import weka.core.Attribute;
+import weka.core.Instances;
 
 import java.net.URL;
+import java.util.Enumeration;
 import java.util.ResourceBundle;
 
-public class ClassifierSettingsController implements Initializable {
+public class ClassifierSettingsController implements StepController {
 
     @FXML
     private CheckBox debugCheckBox;
@@ -26,60 +30,73 @@ public class ClassifierSettingsController implements Initializable {
     @FXML
     private ChoiceBox<KernelType> kernelChoiceBox;
 
+    public CheckBox getDebugCheckBox() {
+        return debugCheckBox;
+    }
+
+    public TextField getEpsilonField() {
+        return epsilonField;
+    }
+
+    public ChoiceBox<FilteringMode> getFilterModeChoiceBox() {
+        return filterModeChoiceBox;
+    }
+
+    public ChoiceBox<KernelType> getKernelChoiceBox() {
+        return kernelChoiceBox;
+    }
+
+    public ChoiceBox<String> getDecision() {
+        return decision;
+    }
+
     @FXML
-    private Spinner<Integer> numDecimalSpinner;
+    private ChoiceBox<String> decision;
 
-    private ClassifierSettings classifierSettings;
+    private static ClassifierSettingsController instance;
 
-    public ClassifierSettingsController(ClassifierSettings classifierSettings) {
-        this.classifierSettings = classifierSettings;
+    public static ClassifierSettingsController getInstance() {
+        if(instance == null)
+            instance = new ClassifierSettingsController();
+        return instance;
     }
 
-    public void onCancelButtonClick() {
-        Stage window = (Stage)numDecimalSpinner.getScene().getWindow();
-        window.close();
-    }
+    private ClassifierSettingsController() {
 
-    public void onOkButtonClick() {
-        classifierSettings.setDebugMode(debugCheckBox.isSelected());
-        classifierSettings.setEpsilon(epsilonField.getText());
-        classifierSettings.setFilteringMode(filterModeChoiceBox.getSelectionModel().getSelectedItem());
-        classifierSettings.setKernelType(kernelChoiceBox.getSelectionModel().getSelectedItem());
-        classifierSettings.setNumDecimalPlaces(numDecimalSpinner.getValue());
-        Stage window = (Stage)numDecimalSpinner.getScene().getWindow();
-        window.close();
     }
 
     @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        debugCheckBox.setSelected(classifierSettings.getDebugMode());
-        epsilonField.setText(classifierSettings.getEpsilon());
+    public boolean canGoBack() {
+        return true;
+    }
+
+    @Override
+    public boolean canGoNext() {
+        return true;
+    }
+
+    @Override
+    public void runWhileEnterStep() {
+        Platform.runLater(() -> {
+            MainWindowController mainWindowController = MainWindowController.getInstance();
+            mainWindowController.getLoadingLabel().setText("Uruchamiam klasyfikator...");
+        });
         filterModeChoiceBox.getItems().add(FilteringMode.NORMALIZE);
         filterModeChoiceBox.getItems().add(FilteringMode.STANDARIZE);
         filterModeChoiceBox.getItems().add(FilteringMode.DISABLED);
-        filterModeChoiceBox.getSelectionModel().select(classifierSettings.getFilteringMode());
         kernelChoiceBox.getItems().add(KernelType.NORMALIZED_POLY);
         kernelChoiceBox.getItems().add(KernelType.POLY);
         kernelChoiceBox.getItems().add(KernelType.PUK);
         kernelChoiceBox.getItems().add(KernelType.RBF);
         kernelChoiceBox.getItems().add(KernelType.STRING);
-        kernelChoiceBox.getSelectionModel().select(classifierSettings.getKernelType());
-        SpinnerValueFactory factory = new SpinnerValueFactory() {
-            @Override
-            public void decrement(int i) {
-                if((int)this.getValue() > 1)
-                    this.setValue((int)this.getValue() - 1);
-            }
-
-            @Override
-            public void increment(int i) {
-                if((int) this.getValue() < 30) {
-                    this.setValue((int)this.getValue() + 1);
-                }
-            }
-        };
-        numDecimalSpinner.setValueFactory(factory);
-        numDecimalSpinner.getValueFactory().setValue(classifierSettings.getNumDecimalPlaces());
+        epsilonField.setText("1.0E-12");
+        filterModeChoiceBox.setValue(FilteringMode.NORMALIZE);
+        kernelChoiceBox.setValue(KernelType.POLY);
+        decision.getItems().clear();
+        Enumeration attributes = TrainDataWindowController.getInstence().getTestInstances().enumerateAttributes();
+        while(attributes.hasMoreElements()) {
+            decision.getItems().add(attributes.nextElement().toString().split(" ")[1]);
+        }
+        decision.setValue(decision.getItems().get(0));
     }
 }
-
